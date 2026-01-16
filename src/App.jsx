@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import Lobby from './components/Lobby';
@@ -27,10 +27,27 @@ function App() {
     otherPlayerFinished: false
   });
   
-  // Connexion Socket.io
+  // Ref pour accéder à gameState dans les callbacks socket
+  const gameStateRef = useRef(gameState);
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+  
+  // Connexion Socket.io avec config optimisée pour mobile
   useEffect(() => {
     const newSocket = io(SOCKET_URL, {
-      transports: ['websocket', 'polling']
+      // Commencer par polling (plus stable sur mobile) puis upgrader vers websocket
+      transports: ['polling', 'websocket'],
+      // Reconnexion automatique
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      // Timeout plus long pour réseaux lents
+      timeout: 20000,
+      // Garder la connexion alive
+      pingTimeout: 60000,
+      pingInterval: 25000
     });
     
     newSocket.on('connect', () => {
@@ -38,9 +55,66 @@ function App() {
       setConnected(true);
     });
     
-    newSocket.on('disconnect', () => {
-      console.log('❌ Déconnecté du serveur');
+    newSocket.on('disconnect', (reason) => {
+      console.log('❌ Déconnecté:', reason);
       setConnected(false);
+      // Ne pas reset si c'est une déconnexion temporaire
+      if (reason === 'io server disconnect') {
+        // Le serveur a forcé la déconnexion, on tente de reconnecter
+        newSocket.connect();
+      }
+    });
+    
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log('🔄 Reconnecté après', attemptNumber, 'tentatives');
+      setConnected(true);
+      // Re-rejoindre la session si on était en jeu
+      const currentState = gameStateRef.current;
+      if (currentState.sessionCode && currentState.player) {
+        console.log('🔄 Tentative de rejoin session...');
+        newSocket.emit('rejoin-session', currentState.sessionCode, currentState.player.name);
+      }
+    });
+    
+    newSocket.on('reconnect_attempt', (attemptNumber) => {
+      console.log('🔄 Tentative de reconnexion...', attemptNumber);
+    });
+    
+    newSocket.on('reconnect_error', (error) => {
+      console.log('❌ Erreur de reconnexion:', error.message);
+    });
+    
+    // Gestion de la reconnexion réussie à une session
+    newSocket.on('rejoin-success', (data) => {
+      console.log('✅ Reconnecté à la session:', data);
+      setGameState(prev => ({
+        ...prev,
+        phase: data.phase,
+        player: data.player,
+        players: data.players,
+        briefing: data.briefing || prev.briefing,
+        scenario: data.scenario || prev.scenario,
+        allResults: data.allResults || prev.allResults,
+        allBriefings: data.allBriefings || prev.allBriefings,
+        learningPoints: data.learningPoints || prev.learningPoints
+      }));
+    });
+    
+    newSocket.on('rejoin-failed', (reason) => {
+      console.log('❌ Reconnexion échouée:', reason);
+      // Reset vers le lobby
+      setGameState({
+        phase: 'lobby',
+        sessionCode: null,
+        player: null,
+        players: [],
+        briefing: null,
+        scenario: null,
+        allResults: null,
+        allBriefings: null,
+        learningPoints: null,
+        otherPlayerFinished: false
+      });
     });
     
     newSocket.on('player-joined', (player) => {
