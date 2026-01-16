@@ -68,18 +68,6 @@ function Learning({ learningPoints, onRestart }) {
                     <p className="text-gray-300 leading-relaxed">
                       {point.content}
                     </p>
-                    
-                    {/* Application pratique */}
-                    <div className="mt-4 p-4 bg-game-success/10 border border-game-success/20 rounded-xl">
-                      <p className="text-sm text-game-success font-medium mb-1">
-                        💡 Application pratique
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        {index === 0 && "Avant de réagir à un conflit, demande-toi : qu'est-ce que je ne sais PAS sur la situation de l'autre ?"}
-                        {index === 1 && "Quand quelqu'un défend fermement une position, cherche le besoin sous-jacent : reconnaissance ? sécurité ? autonomie ?"}
-                        {index === 2 && "Structure tes messages difficiles en : Observation (faits) → Sentiment → Besoin → Demande"}
-                      </p>
-                    </div>
                   </div>
                 </motion.div>
               )}
@@ -152,7 +140,9 @@ function Learning({ learningPoints, onRestart }) {
         
         {/* Footer */}
         <p className="text-center text-gray-500 text-sm mt-8">
-          ConflictLab — Un outil pédagogique pour le Master GBM
+          ConflictLab — Master 2 GBM 2025-2026
+          <br />
+          <span className="text-gray-600">Lamrani Abderrahmane & Ferreira Estel</span>
         </p>
       </div>
     </div>
