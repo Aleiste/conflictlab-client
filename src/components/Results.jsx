@@ -126,6 +126,41 @@ function Results({ player, allResults, allBriefings, onContinue }) {
           </motion.div>
         </div>
         
+        {/* Profil de personnalité */}
+        <motion.div 
+          className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl p-6 border border-purple-500/30 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <h3 className="font-display font-semibold text-xl mb-4 flex items-center gap-2">
+            <span className="text-2xl">{myResults?.personality?.emoji}</span>
+            Ton profil : {myResults?.personality?.name}
+          </h3>
+          
+          <p className="text-gray-300 mb-4">
+            {myResults?.personality?.description}
+          </p>
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-white/5 rounded-xl p-4">
+              <p className="text-sm text-gray-400 mb-2">✅ Tes forces</p>
+              <div className="flex flex-wrap gap-2">
+                {myResults?.personality?.strengths?.map((strength, i) => (
+                  <span key={i} className="px-3 py-1 bg-game-success/20 text-game-success rounded-full text-sm">
+                    {strength}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-white/5 rounded-xl p-4">
+              <p className="text-sm text-gray-400 mb-2">💡 Conseil</p>
+              <p className="text-sm text-gray-300">{myResults?.personality?.advice}</p>
+            </div>
+          </div>
+        </motion.div>
+        
         {/* Révélation des briefings */}
         <motion.div 
           className="bg-game-card rounded-2xl p-6 border border-white/10 mb-8"
